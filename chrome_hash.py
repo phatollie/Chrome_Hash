@@ -8,6 +8,8 @@
 Description: Was curious to see if Google is using AES for encryption on the Chrome browser password vault. Code was tested on a Windows 10 virtual machine running python3 with success. Pulled all passwords/usernames/urls. 
 
 Design: Just grabbed this code from a slacker box. Cleaned up the automation code to suit my needs simple and to the point. 
+
+!!!***DON'T forget to delete/scrub the temp files and .db files as passwords are in the clear.***!!!
 """
 
 import json
@@ -17,16 +19,15 @@ import win32crypt # pip install pywin32
 from Crypto.Cipher import AES # pip install pycryptodome
 import shutil
 
-PATH_TO_TEMP = '<your path to source>/temp'
+PATH_TO_TEMP = '<your path to source>/temp' # GLOBAL to change to a temp location
 
 def get_master_key():
-    with open('{PATH_TO_TEMP}/local state', encoding='utf-8') as f: # smarter to work with copies that live files
+    with open('{PATH_TO_TEMP}/local state', encoding='utf-8') as f: # smarter to work with copies than live files
         local_state = f.read()
         local_state = json.loads(local_state)
     master_key = base64.b64decode(local_state["os_crypt"]["encrypted_key"])
     master_key = master_key[5:]  # removing DPAPI
     master_key = win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1]
-    # print(master_key)
     return master_key
 
 def decrypt_payload(cipher, payload):
@@ -50,8 +51,8 @@ def decrypt_password(buff, master_key):
 if __name__ == '__main__':
 
     master_key = get_master_key()
-    login_db = '{PATH_TO_TEMP}/Login Data'
-    shutil.copy2(login_db, '{PATH_TO_TEMP}/chrome_vault.db') #smarter to work with copies that live files
+    login_db = '{PATH_TO_TEMP}/Login Data' # smarter to work with copies than live files
+    shutil.copy2(login_db, '{PATH_TO_TEMP}/chrome_vault.db') # creates an open .db file to parse 
     conn = sqlite3.connect('{PATH_TO_TEMP}/chrome_vault.db')
     conn = sqlite3.connect('{PATH_TO_TEMP}/chrome_vault.db')
     cursor = conn.cursor()
